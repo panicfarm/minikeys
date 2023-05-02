@@ -1,7 +1,7 @@
 use bitcoin::blockdata::script::Instruction;
 use bitcoin::secp256k1::{self, Secp256k1};
-use bitcoin::util::sighash;
-use bitcoin::{LockTime, Sequence};
+use bitcoin::sighash;
+use bitcoin::{absolute::LockTime, Sequence};
 use hex_lit::hex;
 use miniscript::interpreter::KeySigPair;
 use miniscript::Miniscript;
@@ -35,7 +35,7 @@ fn test_sighash_p2sh_multisig_2x2() {
     let raw_script_pubkey = hex!("a914da55145ca5c56ba01f1b0b98d896425aa4b0f44687");
 
     println!("\nsighash_p2sh_multisig_2x2:");
-    pks_p2wsh(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
+    vrfy_pks(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
 }
 
 fn test_sighash_p2sh_multisig_2x3() {
@@ -49,7 +49,7 @@ fn test_sighash_p2sh_multisig_2x3() {
     let raw_script_pubkey = hex!("a91424334fe9a4bb4bffdc2bc0d2e618625070f8362487");
 
     println!("\nsighash_p2sh_multisig_2x3:");
-    pks_p2wsh(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
+    vrfy_pks(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
 }
 fn test_sighash_p2wsh_multisig_2x2() {
     //The spending transaction is
@@ -67,7 +67,7 @@ fn test_sighash_p2wsh_multisig_2x2() {
         hex!("0020781ada670a98cfb276c6d2a78bbf21eb8f3617f4c2288cb16f5ad8741b5d83dd");
 
     println!("\nsighash_p2wsh_multisig_2x2:");
-    pks_p2wsh(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
+    vrfy_pks(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
 }
 
 fn test_sighash_p2ms_multisig_2x3() {
@@ -82,7 +82,7 @@ fn test_sighash_p2ms_multisig_2x3() {
     let raw_script_pubkey = hex!("524104d81fd577272bbe73308c93009eec5dc9fc319fc1ee2e7066e17220a5d47a18314578be2faea34b9f1f8ca078f8621acd4bc22897b03daa422b9bf56646b342a24104ec3afff0b2b66e8152e9018fe3be3fc92b30bf886b3487a525997d00fd9da2d012dce5d5275854adc3106572a5d1e12d4211b228429f5a7b2f7ba92eb0475bb14104b49b496684b02855bc32f5daefa2e2e406db4418f3b86bca5195600951c7d918cdbe5e6d3736ec2abf2dd7610995c3086976b2c0c7b4e459d10b34a316d5a5e753ae");
 
     println!("\nsighash_p2ms_multisig_2x3:");
-    pks_p2wsh(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
+    vrfy_pks(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
 }
 
 /// Finds the valid PubKeys in a verified segwit multisig transaction input that spends a p2wsh output with "witness_v0_scripthash" scriptPubKey.type
@@ -92,12 +92,12 @@ fn test_sighash_p2ms_multisig_2x3() {
 /// * `raw_tx` - spending tx hex
 /// * `inp_idx` - spending tx input index
 /// * `value` - ref tx output value in sats
-fn pks_p2wsh(mut raw_tx: &[u8], inp_idx: usize, mut raw_reftx: &[u8], raw_script_pubkey: &[u8]) {
+fn vrfy_pks(mut raw_tx: &[u8], inp_idx: usize, mut raw_reftx: &[u8], raw_script_pubkey: &[u8]) {
     let tx: bitcoin::Transaction =
         bitcoin::consensus::Decodable::consensus_decode(&mut raw_tx).unwrap();
     let reftx: bitcoin::Transaction =
         bitcoin::consensus::Decodable::consensus_decode(&mut raw_reftx).unwrap();
-    let script_pubkey = bitcoin::blockdata::script::Script::from(raw_script_pubkey.to_vec());
+    let script_pubkey = bitcoin::ScriptBuf::from_bytes(raw_script_pubkey.to_vec());
     let interpreter = miniscript::Interpreter::from_txdata(
         &script_pubkey,
         &tx.input[inp_idx].script_sig,
