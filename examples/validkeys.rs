@@ -1,11 +1,8 @@
-use bitcoin::blockdata::script::Instruction;
-use bitcoin::secp256k1::{self, Secp256k1};
+use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash;
 use bitcoin::{absolute::LockTime, Sequence};
 use hex_lit::hex;
 use miniscript::interpreter::KeySigPair;
-use miniscript::Miniscript;
-use miniscript::Segwitv0;
 
 //These are real blockchain transactions examples of computing sighash for:
 // - P2WPKH
@@ -22,6 +19,8 @@ fn main() {
     test_sighash_p2sh_multisig_2x3();
     test_sighash_p2sh_multisig_2x2();
     test_sighash_p2wsh_multisig_2x2();
+    test_sighash_p2tr_multisig_1x2();
+    test_sighash_p2tr_multisig_2x2();
 }
 
 fn test_sighash_p2sh_multisig_2x2() {
@@ -85,6 +84,40 @@ fn test_sighash_p2ms_multisig_2x3() {
     vrfy_pks(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
 }
 
+fn test_sighash_p2tr_multisig_1x2() {
+    //Spending tx:
+    //bitcoin-cli getrawtransaction 2eb8dbaa346d4be4e82fe444c2f0be00654d8cfd8c4a9a61b11aeaab8c00b272  3
+    //Inp 0
+    //tapscript: "c13e6d193f5d04506723bd67abcc5d31b610395c445ac6744cb0a1846b3aabae OP_CHECKSIG b0e2e48ad7c3d776cf6f2395c504dc19551268ea7429496726c5d5bf72f9333c OP_CHECKSIGADD 1 OP_NUMEQUAL"
+    let raw_tx = hex!("010000000001022373cf02ce7df6500ae46a4a0fbbb1b636d2debed8f2df91e2415627397a34090000000000fdffffff88c23d928893cd3509845516cf8411b7cab2738c054cc5ce7e4bde9586997c770000000000fdffffff0200000000000000002b6a29676d20746170726f6f7420f09fa5952068747470733a2f2f626974636f696e6465766b69742e6f72676e9e1100000000001976a91405070d0290da457409a37db2e294c1ffbc52738088ac04410adf90fd381d4a13c3e73740b337b230701189ed94abcb4030781635f035e6d3b50b8506470a68292a2bc74745b7a5732a28254b5f766f09e495929ec308090b01004620c13e6d193f5d04506723bd67abcc5d31b610395c445ac6744cb0a1846b3aabaeac20b0e2e48ad7c3d776cf6f2395c504dc19551268ea7429496726c5d5bf72f9333cba519c21c0000000000000000000000000000000000000000000000000000000000000000104414636070d21adc8280735383102f7a0f5978cea257777a23934dd3b458b79bf388aca218e39e23533a059da173e402c4fc5e3375e1f839efb22e9a5c2a815b07301004620c13e6d193f5d04506723bd67abcc5d31b610395c445ac6744cb0a1846b3aabaeac20b0e2e48ad7c3d776cf6f2395c504dc19551268ea7429496726c5d5bf72f9333cba519c21c0000000000000000000000000000000000000000000000000000000000000000100000000");
+    //Original transaction:
+    //bitcoin-cli getrawtransaction 09347a39275641e291dff2d8beded236b6b1bb0f4a6ae40a50f67dce02cf7323  3
+    let raw_reftx = hex!("010000000409cc8928f1d3ea4855dedbff8b783e3379735817b072df569776b5c5187d09ca010000006b483045022100a885cea8709cbb93b8311bf2fd5a30ff3e9fc02459652ebb040f47efc70cf51e02202194d53c2fe26cafcdf5748722949a275faf8575d15e2967d1bd3010d652c21b012102682e5ebd58a7d62a87b0490572776e4bb87dc868fb06419d8f33fe41c21160f9ffffffff0fbd54556226c210849929c0c50c00fc472ab4448be0333aa59f335c4e5a088b010000006b483045022100c4c368a8696a200e2d815c0d7cba690e415e3af6f6a0472b28c292ab85ffaa7002207911811c71ac927c48c47797fe8790a0d7ba172a7005ee8036e70e481909a375012102682e5ebd58a7d62a87b0490572776e4bb87dc868fb06419d8f33fe41c21160f9ffffffffa5091f20a2f91e56811e0d979b2dd7126c58dcd2d767d379e25c0a09c3c526fb010000006a473044022046bf081055f3409cee71cedb396a28060f1166195130cb8bedd6a13ecd1f6beb0220602ebd6e0a7b2c39bcfb59b42035dc246ec2a87e2e9f4b71ffa13feb15167615012102682e5ebd58a7d62a87b0490572776e4bb87dc868fb06419d8f33fe41c21160f9ffffffffb2c3b6434a7bda252db8aeb975ea5ca58da36a461545bb634dddadf5e35c6607010000006b483045022100a0466b24f77b68c54748d1c9ac43559eb91f952928b3fe28e452e619f814f23d022003853b255707400301cedd7922256d623ba2fc60d2734f19f79b2c6f0f61c3d4012102682e5ebd58a7d62a87b0490572776e4bb87dc868fb06419d8f33fe41c21160f9ffffffff01273f110000000000225120667bdd93c7c029767fd516d2ea292624b938fefefa175ac9f1220cf508963ff300000000");
+    //Out 0
+    let raw_script_pubkey =
+        hex!("5120667bdd93c7c029767fd516d2ea292624b938fefefa175ac9f1220cf508963ff3");
+
+    println!("\nsighash_p2tr_multisig_1x2");
+    vrfy_pks_tr(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
+}
+
+fn test_sighash_p2tr_multisig_2x2() {
+    //Spending tx:
+    //bitcoin-cli getrawtransaction 905ecdf95a84804b192f4dc221cfed4d77959b81ed66013a7e41a6e61e7ed530 3
+    //Inp 0
+    //tapscript: "febe583fa77e49089f89b78fa8c116710715d6e40cc5f5a075ef1681550dd3c4 OP_CHECKSIGVERIFY d0fa46cb883e940ac3dc5421f05b03859972639f51ed2eccbf3dc5a62e2e1b15 OP_CHECKSIG"
+    let raw_tx = hex!("02000000000101b41b20295ac85fd2ae3e3d02900f1a1e7ddd6139b12e341386189c03d6f5795b0000000000fdffffff0100000000000000003c6a3a546878205361746f7368692120e2889e2f32316d696c20466972737420546170726f6f74206d756c7469736967207370656e64202d426974476f044123b1d4ff27b16af4b0fcb9672df671701a1a7f5a6bb7352b051f461edbc614aa6068b3e5313a174f90f3d95dc4e06f69bebd9cf5a3098fde034b01e69e8e788901400fd4a0d3f36a1f1074cb15838a48f572dc18d412d0f0f0fc1eeda9fa4820c942abb77e4d1a3c2b99ccf4ad29d9189e6e04a017fe611748464449f681bc38cf394420febe583fa77e49089f89b78fa8c116710715d6e40cc5f5a075ef1681550dd3c4ad20d0fa46cb883e940ac3dc5421f05b03859972639f51ed2eccbf3dc5a62e2e1b15ac41c02e44c9e47eaeb4bb313adecd11012dfad435cd72ce71f525329f24d75c5b9432774e148e9209baf3f1656a46986d5f38ddf4e20912c6ac28f48d6bf747469fb100000000");
+    //Original transaction:
+    //bitcoin-cli getrawtransaction 5b79f5d6039c188613342eb13961dd7d1e1a0f90023d3eaed25fc85a29201bb4 3
+    let raw_reftx = hex!("0200000000010140b84131c5c582290126bbd8b8e2e5bbd7c2681a4b01314f1b874ea1b5fdf81c0000000000ffffffff014c1d0000000000002251202fcad7470279652cc5f88b8908678d6f4d57af5627183b03fc8404cb4e16d88902473044022066d6939ea701db5d306fb948aea64af196ae52fc34d62c2e7992f62cdabc791402200abdac6766105457ceabcbe55a2d33f064d515210085f7af1248d273442e2b2a012103476f0d6a85ced4a85b08cbabbff28564a1ba31091b38f10b167f4fe1e1c9c4f900d40a00");
+    //Out 0
+    let raw_script_pubkey =
+        hex!("51202fcad7470279652cc5f88b8908678d6f4d57af5627183b03fc8404cb4e16d889");
+
+    println!("\nsighash_p2tr_multisig_2x2");
+    vrfy_pks_tr(&raw_tx, 0, &raw_reftx, &raw_script_pubkey);
+}
+
 /// Finds the valid PubKeys in a verified segwit multisig transaction input that spends a p2wsh output with "witness_v0_scripthash" scriptPubKey.type
 ///
 /// # Arguments
@@ -135,5 +168,46 @@ fn vrfy_pks(mut raw_tx: &[u8], inp_idx: usize, mut raw_reftx: &[u8], raw_script_
         res
     }));
 
-    for elem in iter {}
+    for _ in iter {}
+}
+
+fn vrfy_pks_tr(mut raw_tx: &[u8], inp_idx: usize, mut raw_reftx: &[u8], raw_script_pubkey: &[u8]) {
+    let tx: bitcoin::Transaction =
+        bitcoin::consensus::Decodable::consensus_decode(&mut raw_tx).unwrap();
+    let reftx: bitcoin::Transaction =
+        bitcoin::consensus::Decodable::consensus_decode(&mut raw_reftx).unwrap();
+    let script_pubkey = bitcoin::ScriptBuf::from_bytes(raw_script_pubkey.to_vec());
+    let interpreter = miniscript::Interpreter::from_txdata(
+        &script_pubkey,
+        &tx.input[inp_idx].script_sig,
+        &tx.input[inp_idx].witness,
+        Sequence::ZERO,
+        LockTime::ZERO,
+    )
+    .unwrap();
+    println!(
+        "is_v1_p2tr = {} is_taproot_v1_key_spend = {} is_taproot_v1_script_spend = {}",
+        script_pubkey.is_v1_p2tr(),
+        interpreter.is_taproot_v1_key_spend(),
+        interpreter.is_taproot_v1_script_spend()
+    );
+    println!(
+        "inferred_descriptor {:?}",
+        interpreter.inferred_descriptor_string()
+    );
+
+    let secp = Secp256k1::new();
+    let prevouts = sighash::Prevouts::All::<bitcoin::TxOut>(&reftx.output); //TODO One variant case??
+    let iter = interpreter.iter_custom(Box::new(|key_sig: &KeySigPair| {
+        let res = interpreter.verify_sig(&secp, &tx, inp_idx, &prevouts, key_sig);
+        let (pk, sig) = key_sig.as_schnorr().expect("Schnorr Sig");
+        //println!(" tx {:?}", &tx);
+        println!("{}<->\t{} {}", pk, sig.sig, res);
+        if res {
+            println!("Success pk {}", pk);
+        }
+        res
+    }));
+
+    for _ in iter {}
 }
