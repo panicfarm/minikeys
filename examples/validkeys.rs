@@ -127,12 +127,12 @@ fn vrfy_pks(mut raw_tx: &[u8], inp_idx: usize, mut raw_reftx: &[u8]) {
         LockTime::ZERO,
     )
     .unwrap();
-    println!("is_p2pk()			= {}", script_pubkey.is_p2pk());
-    println!("is_p2pkh()		= {}", script_pubkey.is_p2pkh());
-    println!("is_v0_p2wpkh()	= {}", script_pubkey.is_v0_p2wpkh());
-    println!("is_v0_p2wsh()		= {}", script_pubkey.is_v0_p2wsh());
-    println!("is_v1_p2tr()		= {}", script_pubkey.is_v1_p2tr());
-    println!("is_p2sh()			= {}", script_pubkey.is_p2sh());
+    println!("is_p2pk()\t= {}", script_pubkey.is_p2pk());
+    println!("is_p2pkh()\t= {}", script_pubkey.is_p2pkh());
+    println!("is_v0_p2wpkh()\t= {}", script_pubkey.is_v0_p2wpkh());
+    println!("is_v0_p2wsh()\t= {}", script_pubkey.is_v0_p2wsh());
+    println!("is_v1_p2tr()\t= {}", script_pubkey.is_v1_p2tr());
+    println!("is_p2sh()\t= {}", script_pubkey.is_p2sh());
     println!(
         "legacy {} script_code {:?}",
         interpreter.is_legacy(),
@@ -144,7 +144,15 @@ fn vrfy_pks(mut raw_tx: &[u8], inp_idx: usize, mut raw_reftx: &[u8]) {
     );
 
     let secp = Secp256k1::new();
-    let prevouts = sighash::Prevouts::All::<bitcoin::TxOut>(&reftx.output);
+    let outs_vec: Vec<bitcoin::TxOut>;
+    if interpreter.is_segwit_v0() {
+        //prevouts need to be aligned with inputs since miniscript::Interpreter::verify_sig looks for the prevout at inp_idx
+        let vout: usize = tx.input[inp_idx].previous_output.vout.try_into().unwrap();
+        outs_vec = vec![reftx.output[vout].clone(); inp_idx + 1];
+    } else {
+        outs_vec = vec![];
+    }
+    let prevouts = sighash::Prevouts::All::<bitcoin::TxOut>(&outs_vec);
     let iter = interpreter.iter_custom(Box::new(|key_sig: &KeySigPair| {
         let res = interpreter.verify_sig(&secp, &tx, inp_idx, &prevouts, key_sig);
         let (pk, ecdsa_sig) = key_sig.as_ecdsa().expect("Ecdsa Sig");
