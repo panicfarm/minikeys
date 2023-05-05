@@ -61,16 +61,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3011d1213f159867b13cfd6ac92d2cd5f1345762c63be3554e84092d85a50bbd"
 
 [[package]]
-name = "miniscript"
-version = "9.0.0"
-source = "git+https://github.com/sanket1729/rust-miniscript?branch=release_10.0.0#956d332c6461ff70c39db3770292a8434e97699e"
-dependencies = [
- "bitcoin",
- "bitcoin-private",
-]
-
-[[package]]
-name = "multisig-test"
+name = "minikeys"
 version = "0.1.0"
 dependencies = [
  "bitcoin",
@@ -79,6 +70,15 @@ dependencies = [
  "hex",
  "hex_lit",
  "miniscript",
+]
+
+[[package]]
+name = "miniscript"
+version = "9.0.0"
+source = "git+https://github.com/sanket1729/rust-miniscript?branch=release_10.0.0#956d332c6461ff70c39db3770292a8434e97699e"
+dependencies = [
+ "bitcoin",
+ "bitcoin-private",
 ]
 
 [[package]]

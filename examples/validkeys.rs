@@ -167,9 +167,13 @@ fn vrfy_pks(mut raw_tx: &[u8], inp_idx: usize, mut raw_reftx: &[u8]) -> Vec<bitc
     for _ in iter {}
     if verified_pk_vec.len() > 0 {
         println!(
-            "\nsuccessfully verified {} pks {:?}",
+            "\nsuccessfully verified {} pks: {}",
             verified_pk_vec.len(),
             verified_pk_vec
+                .iter()
+                .map(|n| n.to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
         );
     } else {
         println!("\n*** failed to verify pks");
@@ -234,9 +238,13 @@ fn vrfy_pks_tr(
     for _ in iter {}
     if verified_pk_vec.len() > 0 {
         println!(
-            "\nsuccessfully verified {} pks {:?}",
+            "\nsuccessfully verified {} pks: {}",
             verified_pk_vec.len(),
             verified_pk_vec
+                .iter()
+                .map(|n| n.to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
         );
     } else {
         println!("\n*** failed to verify pks");
